@@ -46,8 +46,8 @@ class file_printer:
                 pt.plot(range(1, len(self.series[y]) + 1), self.series[y], label=label)
 
 def run_logistic_regression():
-    train_inputs, train_targets = load_train()
-    #train_inputs, train_targets = load_train_small()
+    #train_inputs, train_targets = load_train()
+    train_inputs, train_targets = load_train_small()
     valid_inputs, valid_targets = load_valid()
 
     N, M = train_inputs.shape
@@ -57,7 +57,7 @@ def run_logistic_regression():
     # TODO: Set hyperparameters
     hyperparameters = {
                     'learning_rate': 0.1, 
-                    'weight_regularization': 0.0001,  
+                    'weight_regularization': 0.00001,  
                     'num_iterations': 500,
                  }
 
@@ -69,46 +69,62 @@ def run_logistic_regression():
     # diff should be very close to 0.
     run_check_grad(hyperparameters)
 
+    n_runs = 10
+
     # Begin learning with gradient descent
-    for i in range(1, 6):
+    for i in range(1, 7):
         hyperparameters['weight_regularization'] *= 10
-        for t in xrange(hyperparameters['num_iterations']):
+        a = 0
+        b = 0
+        c = 0
+        d = 0
+        for i in range(n_runs):
+            for t in xrange(hyperparameters['num_iterations']):
 
-            # TODO: you may need to modify this loop to create plots, etc.
+                # TODO: you may need to modify this loop to create plots, etc.
 
-            # Find the negative log likelihood and its derivatives w.r.t. the weights.
-            f, df, predictions = logistic_pen(weights, train_inputs, train_targets, hyperparameters)
-            
-            # Evaluate the prediction.
-            cross_entropy_train, frac_correct_train = evaluate(train_targets, predictions)
+                # Find the negative log likelihood and its derivatives w.r.t. the weights.
+                f, df, predictions = logistic_pen(weights, train_inputs, train_targets, hyperparameters)
+                
+                # Evaluate the prediction.
+                cross_entropy_train, frac_correct_train = evaluate(train_targets, predictions)
 
-            if np.isnan(f) or np.isinf(f):
-                raise ValueError("nan/inf error")
+                if np.isnan(f) or np.isinf(f):
+                    raise ValueError("nan/inf error")
 
-            # update parameters
-            weights = weights - hyperparameters['learning_rate'] * df / N
+                # update parameters
+                weights = weights - hyperparameters['learning_rate'] * df / N
 
-            # Make a prediction on the valid_inputs.
-            predictions_valid = logistic_predict(weights, valid_inputs)
+                # Make a prediction on the valid_inputs.
+                predictions_valid = logistic_predict(weights, valid_inputs)
 
-            # Evaluate the prediction.
-            cross_entropy_valid, frac_correct_valid = evaluate(valid_targets, predictions_valid)
-            
-            if t == hyperparameters['num_iterations'] - 1:
-                # print stats on final iteration
-                output_file.printlist([
-                            hyperparameters['weight_regularization'],
-                            cross_entropy_train,
-                            frac_correct_train * 100,
-                            cross_entropy_valid,
-                            frac_correct_valid * 100,
-                ])  
-                print "Final stats: ", cross_entropy_train, frac_correct_valid * 100, cross_entropy_valid, frac_correct_valid * 100
+                # Evaluate the prediction.
+                cross_entropy_valid, frac_correct_valid = evaluate(valid_targets, predictions_valid)
+
+                if t == hyperparameters['num_iterations'] - 1:
+                    a += cross_entropy_train
+                    b += 100 - frac_correct_train * 100
+                    c += cross_entropy_valid
+                    d += 100 - frac_correct_valid * 100
+        a /= n_runs
+        b /= n_runs
+        c /= n_runs
+        d /= n_runs
+        if t == hyperparameters['num_iterations'] - 1:
+            # print stats on final iteration
+            output_file.printlist([
+                        hyperparameters['weight_regularization'],
+                        a,
+                        b,
+                        c,
+                        d,
+            ])  
+            print "Final stats at lamba=", hyperparameters['weight_regularization'] , ": ", a, b, c, d
 
     output_file.closef()
-    output_file.plot(0, 1, 'CE_train')
-    output_file.plot(0, 3, 'CE_validate')
-    output_file.show("mnist_train", log=True)
+    output_file.plot(0, 2, 'CE_train_classification_error')
+    output_file.plot(0, 4, 'CE_validate_classification_error')
+    output_file.show("mnist_train_small", log=True)
 
 def run_check_grad(hyperparameters):
     """Performs gradient check on logistic function.
