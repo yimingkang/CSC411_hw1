@@ -2,6 +2,14 @@
 
 import numpy as np
 from utils import sigmoid
+import math
+
+def mod_data(data):
+    (ndata, dim) = data.shape
+    one_array = np.ones((ndata,1))
+    # modify data to become N x (M + 1) matrix
+    # where the last element of every sample is 1
+    return np.concatenate((data, one_array), axis=1)
 
 def logistic_predict(weights, data):
     """
@@ -20,8 +28,9 @@ def logistic_predict(weights, data):
     """
 
     # TODO: Finish this function
-
-    return y
+    data = mod_data(data)
+    z_array = get_z_array(weights, data)
+    return sigmoid(z_array)
 
 def evaluate(targets, y):
     """
@@ -34,8 +43,35 @@ def evaluate(targets, y):
                        we want to compute CE(targets, y).
         frac_correct : (scalar) Fraction of inputs classified correctly.
     """
+    n_correct = 0
+    n_total = len(targets)
+    ce = 1
+
+    for i in xrange(len(targets)):
+        target = targets[i][0]
+        predict = y[i][0]
+        if predict >= 0.5 and target == 0:
+            n_correct += 1
+        elif predict < 0.5 and target == 1:
+            n_correct += 1
+
+        if target == 0:
+            ce *= predict
+        else:
+            ce *= (1 - predict)
+
     # TODO: Finish this function
-    
+    try:
+        ce = math.log(ce) * -1
+    except ValueError:
+        print "log(0) encountered!"
+        print "DEBUG INFO:"
+        print "targets were:"
+        print targets
+        print "y = P(C = 0 | x) were:"
+        print y
+        ce = 0
+    frac_correct = n_correct * 1.0 / n_total * 1.0
     return ce, frac_correct
 
 def logistic(weights, data, targets, hyperparameters):
@@ -59,11 +95,39 @@ def logistic(weights, data, targets, hyperparameters):
         df:      (M+1) x 1 vector of derivative of f w.r.t. weights.
         y:       N x 1 vector of probabilities.
     """
-
     # TODO: Finish this function
+    n_data = len(data)
+    dim_data = len(data[0])
 
+    f = 0
+    y = logistic_predict(weights, data)
+
+    data = mod_data(data)
+
+    # dl/dw_j = SUM(x_ij * (t_i - (1 - sigmoid(z))))
+    df = np.dot(data.T, (1.0 * targets) - (1 - y))
+
+    # to calculate f, we need to sum the negative log of all y iff target is 0 and (1-y) iff target is 1
+    f = -1.0 * np.dot(targets.T, np.log(1 - y)) - 1.0 * np.dot(1 - targets.T, np.log(y))
+
+    # calculate P(C=0|x_i) for all x_i 
     return f, df, y
 
+def get_ndarray(l):
+    a = np.ndarray(shape=(len(l), 1))
+    for i in range(len(a)):
+        a[i] = l[i]
+    return a
+
+def get_z_array(weights, data):
+    return np.dot(data, weights)
+
+def get_z(weights, data):
+    d = data + [1]
+    p = 0
+    for i in range(len(d)):
+        p += weights[i][0] * d[i]
+    return p
 
 def logistic_pen(weights, data, targets, hyperparameters):
     """
