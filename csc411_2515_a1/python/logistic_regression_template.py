@@ -46,8 +46,8 @@ class file_printer:
                 pt.plot(range(1, len(self.series[y]) + 1), self.series[y], label=label)
 
 def run_logistic_regression():
-    #train_inputs, train_targets = load_train()
-    train_inputs, train_targets = load_train_small()
+    train_inputs, train_targets = load_train()
+    #train_inputs, train_targets = load_train_small()
     valid_inputs, valid_targets = load_valid()
 
     N, M = train_inputs.shape
@@ -124,7 +124,7 @@ def run_logistic_regression():
     output_file.closef()
     output_file.plot(0, 2, 'CE_train_classification_error')
     output_file.plot(0, 4, 'CE_validate_classification_error')
-    output_file.show("mnist_train_small", log=True)
+    output_file.show("mnist_train", log=True)
 
 def run_check_grad(hyperparameters):
     """Performs gradient check on logistic function.
