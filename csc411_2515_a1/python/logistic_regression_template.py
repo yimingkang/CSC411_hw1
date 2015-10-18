@@ -35,7 +35,6 @@ class file_printer:
         pt.show()
 
     def plot(self, x, y, label):
-        print self.series[y]
         if max(x, y) > len(self.series) - 1:
             raise ValueError("Plot index out of bound")
         else:
@@ -56,8 +55,8 @@ def run_logistic_regression():
     # TODO: Set hyperparameters
     hyperparameters = {
                     'learning_rate': 0.1, 
-                    'weight_regularization': 1,  
-                    'num_iterations': 1000,
+                    'weight_regularization': 0.1,  
+                    'num_iterations': 500,
                  }
 
     # Logistic regression weights
@@ -74,7 +73,7 @@ def run_logistic_regression():
         # TODO: you may need to modify this loop to create plots, etc.
 
         # Find the negative log likelihood and its derivatives w.r.t. the weights.
-        f, df, predictions = logistic(weights, train_inputs, train_targets, hyperparameters)
+        f, df, predictions = logistic_pen(weights, train_inputs, train_targets, hyperparameters)
         
         # Evaluate the prediction.
         cross_entropy_train, frac_correct_train = evaluate(train_targets, predictions)
@@ -111,7 +110,7 @@ def run_logistic_regression():
     output_file.closef()
     output_file.plot(-1, 0, "cross_entropy_train")
     output_file.plot(-1, 2, "cross_entropy_validate")
-    output_file.show("mnist_train")
+    output_file.show("mnist_train_small")
 
 def run_check_grad(hyperparameters):
     """Performs gradient check on logistic function.
@@ -126,7 +125,7 @@ def run_check_grad(hyperparameters):
     data = np.random.randn(num_examples, num_dimensions)
     targets = np.round(np.random.rand(num_examples, 1), 0)
 
-    diff = check_grad(logistic,      # function to check
+    diff = check_grad(logistic_pen,      # function to check
                       weights,
                       0.001,         # perturbation
                       data,
