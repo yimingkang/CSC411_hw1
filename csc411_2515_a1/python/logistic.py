@@ -45,7 +45,6 @@ def evaluate(targets, y):
     """
     n_correct = 0
     n_total = len(targets)
-    ce = 1
 
     for i in xrange(len(targets)):
         target = targets[i][0]
@@ -54,25 +53,11 @@ def evaluate(targets, y):
             n_correct += 1
         elif predict < 0.5 and target == 1:
             n_correct += 1
+    frac_correct = n_correct * 1.0 / (n_total * 1.0)
 
-        if target == 0:
-            ce *= predict
-        else:
-            ce *= (1 - predict)
-
+    ce = -1.0 * np.dot(targets.T, np.log(1 - y)) - 1.0 * np.dot(1 - targets.T, np.log(y))
     # TODO: Finish this function
-    try:
-        ce = math.log(ce) * -1
-    except ValueError:
-        print "log(0) encountered!"
-        print "DEBUG INFO:"
-        print "targets were:"
-        print targets
-        print "y = P(C = 0 | x) were:"
-        print y
-        ce = 0
-    frac_correct = n_correct * 1.0 / n_total * 1.0
-    return ce, frac_correct
+    return ce[0,0], frac_correct
 
 def logistic(weights, data, targets, hyperparameters):
     """
@@ -111,7 +96,7 @@ def logistic(weights, data, targets, hyperparameters):
     f = -1.0 * np.dot(targets.T, np.log(1 - y)) - 1.0 * np.dot(1 - targets.T, np.log(y))
 
     # calculate P(C=0|x_i) for all x_i 
-    return f, df, y
+    return f[0,0], df, y
 
 def get_ndarray(l):
     a = np.ndarray(shape=(len(l), 1))

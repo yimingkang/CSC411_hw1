@@ -29,9 +29,11 @@ class file_printer:
     def closef(self):
         self.f.close()
 
-    def show(self, title):
+    def show(self, title, log=False):
         pt.title(title)
         pt.legend()
+        if log:
+            pt.xscale('log')
         pt.show()
 
     def plot(self, x, y, label):
@@ -50,12 +52,12 @@ def run_logistic_regression():
 
     N, M = train_inputs.shape
     output_file = file_printer("train_output.log")
-    output_file.printlist(['train_ce', 'train_predict_perc', 'validate_ce', 'validate_predict_perc'])
+    output_file.printlist(['pen(lambda)', 'train_ce', 'train_predict_perc', 'validate_ce', 'validate_predict_perc'])
 
     # TODO: Set hyperparameters
     hyperparameters = {
                     'learning_rate': 0.1, 
-                    'weight_regularization': 0.1,  
+                    'weight_regularization': 0.0001,  
                     'num_iterations': 500,
                  }
 
@@ -68,49 +70,45 @@ def run_logistic_regression():
     run_check_grad(hyperparameters)
 
     # Begin learning with gradient descent
-    for t in xrange(hyperparameters['num_iterations']):
+    for i in range(1, 6):
+        hyperparameters['weight_regularization'] *= 10
+        for t in xrange(hyperparameters['num_iterations']):
 
-        # TODO: you may need to modify this loop to create plots, etc.
+            # TODO: you may need to modify this loop to create plots, etc.
 
-        # Find the negative log likelihood and its derivatives w.r.t. the weights.
-        f, df, predictions = logistic_pen(weights, train_inputs, train_targets, hyperparameters)
-        
-        # Evaluate the prediction.
-        cross_entropy_train, frac_correct_train = evaluate(train_targets, predictions)
+            # Find the negative log likelihood and its derivatives w.r.t. the weights.
+            f, df, predictions = logistic_pen(weights, train_inputs, train_targets, hyperparameters)
+            
+            # Evaluate the prediction.
+            cross_entropy_train, frac_correct_train = evaluate(train_targets, predictions)
 
-        if np.isnan(f) or np.isinf(f):
-            raise ValueError("nan/inf error")
+            if np.isnan(f) or np.isinf(f):
+                raise ValueError("nan/inf error")
 
-        # update parameters
-        weights = weights - hyperparameters['learning_rate'] * df / N
+            # update parameters
+            weights = weights - hyperparameters['learning_rate'] * df / N
 
-        # Make a prediction on the valid_inputs.
-        predictions_valid = logistic_predict(weights, valid_inputs)
+            # Make a prediction on the valid_inputs.
+            predictions_valid = logistic_predict(weights, valid_inputs)
 
-        # Evaluate the prediction.
-        cross_entropy_valid, frac_correct_valid = evaluate(valid_targets, predictions_valid)
-        
-        # print stats to file, fuck matplotlib btw
-        output_file.printlist([
-                    cross_entropy_train,
-                    frac_correct_train * 100,
-                    cross_entropy_valid,
-                    frac_correct_valid * 100,
-        ])  
+            # Evaluate the prediction.
+            cross_entropy_valid, frac_correct_valid = evaluate(valid_targets, predictions_valid)
+            
+            if t == hyperparameters['num_iterations'] - 1:
+                # print stats on final iteration
+                output_file.printlist([
+                            hyperparameters['weight_regularization'],
+                            cross_entropy_train,
+                            frac_correct_train * 100,
+                            cross_entropy_valid,
+                            frac_correct_valid * 100,
+                ])  
+                print "Final stats: ", cross_entropy_train, frac_correct_valid * 100, cross_entropy_valid, frac_correct_valid * 100
 
-        # print some stats
-        stat_msg = "ITERATION:{:4d}  TRAIN NLOGL:{:4.2f}  TRAIN CE:{:.6f}  "
-        stat_msg += "TRAIN FRAC:{:2.2f}  VALID CE:{:.6f}  VALID FRAC:{:2.2f}"
-        print stat_msg.format(t+1,
-                              float(f / N),
-                              float(cross_entropy_train),
-                              float(frac_correct_train*100),
-                              float(cross_entropy_valid),
-                              float(frac_correct_valid*100))
     output_file.closef()
-    output_file.plot(-1, 0, "cross_entropy_train")
-    output_file.plot(-1, 2, "cross_entropy_validate")
-    output_file.show("mnist_train_small")
+    output_file.plot(0, 1, 'CE_train')
+    output_file.plot(0, 3, 'CE_validate')
+    output_file.show("mnist_train", log=True)
 
 def run_check_grad(hyperparameters):
     """Performs gradient check on logistic function.
