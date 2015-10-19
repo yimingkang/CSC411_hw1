@@ -141,13 +141,10 @@ def logistic_pen(weights, data, targets, hyperparameters):
     E, df, y = logistic(weights, data, targets, hyperparameters)
 
     # sum of all weights squared multiplied by lambda/2. Add on top of logistic
-    # note that we also included b^2 in this calculation, this is a feature, not a bug!
     pen_1 = regularizer * 0.5 * (reduce(lambda x,y: x + y * y, weights))
-    pen_2 = 0  # TODO
-    f = E + pen_1 + pen_2
+    f = E + pen_1
 
     # calculat pen for dL/dwi - dE/dwi, add the difference to df
-    # also included dL/db - dE/db calculation
     df = df + regularizer * weights
 
     return f, df, y
