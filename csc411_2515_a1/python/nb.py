@@ -41,6 +41,9 @@ class NaiveBayesClassifier(object):
         self.mean = mean
         self.var = var + _SMALL_CONSTANT
 
+        print mean
+        print self.var
+
         self.model_learned = True
 
     def predict(self, test_data):
@@ -80,6 +83,20 @@ def main():
     
     train_inputs, train_targets = load_train()
     test_inputs, test_targets = load_test()
+    valid_inputs, valid_targets = load_valid()
+
+    # get a new classifer
+    nb_classifier = NaiveBayesClassifier()
+
+    # train the classifier
+    nb_classifier.train(train_inputs, train_targets)
+
+    # preditc test data
+    accuracy = nb_classifier.compute_accuracy(test_inputs, test_targets)
+    accuracy_2 = nb_classifier.compute_accuracy(valid_inputs, valid_targets)
+
+    print "Test set accuracy is ", accuracy * 100, "%"
+    print "Validation set accuracy is ", accuracy_2 * 100, "%"
 
     # add your code here (it should be less than 10 lines)
 
